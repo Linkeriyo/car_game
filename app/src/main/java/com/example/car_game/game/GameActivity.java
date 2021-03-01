@@ -8,10 +8,13 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+
+import com.example.car_game.R;
 
 import java.util.List;
 
@@ -20,6 +23,8 @@ public class GameActivity extends AppCompatActivity implements SensorEventListen
     GameView gameView;
     SensorManager sensorManager;
     Sensor accelerometerSensor;
+    MediaPlayer mediaPlayer;
+    private boolean mediaPlayerPaused = true;
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
@@ -38,6 +43,11 @@ public class GameActivity extends AppCompatActivity implements SensorEventListen
                     SensorManager.SENSOR_DELAY_UI);
         }
 
+        mediaPlayer = MediaPlayer.create(this, R.raw.ingamemusic);
+        mediaPlayer.setLooping(true);
+        mediaPlayer.setVolume(0.5f, 0.5f);
+        mediaPlayerPaused = false;
+
         gameView = new GameView(this, display, this, getIntent().getIntExtra("level", 1));
         setContentView(gameView);
     }
@@ -50,12 +60,20 @@ public class GameActivity extends AppCompatActivity implements SensorEventListen
         decorView.setSystemUiVisibility(uiOptions);
         setContentView(gameView);
         sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
+        if (mediaPlayerPaused) {
+            mediaPlayer.start();
+            mediaPlayerPaused = false;
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         sensorManager.unregisterListener(this);
+        if (mediaPlayer.isPlaying()) {
+            mediaPlayer.pause();
+            mediaPlayerPaused = true;
+        }
     }
 
     @Override
@@ -74,6 +92,4 @@ public class GameActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
-
-
 }

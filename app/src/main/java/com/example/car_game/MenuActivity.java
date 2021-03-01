@@ -2,7 +2,6 @@ package com.example.car_game;
 
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.View;
 import android.view.Window;
 import android.widget.TextView;
@@ -13,7 +12,6 @@ import java.io.IOException;
 
 public class MenuActivity extends AppCompatActivity {
 
-    TextView timeTextView, crashesTextView, pointsTextView;
     MediaPlayer mediaPlayer;
     private boolean mediaPlayerPaused = true;
 
@@ -30,15 +28,6 @@ public class MenuActivity extends AppCompatActivity {
         mediaPlayer.setLooping(true);
         mediaPlayer.start();
         mediaPlayerPaused = false;
-    }
-
-    public void resetMediaPlayer() {
-        mediaPlayer.stop();
-        try {
-            mediaPlayer.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
