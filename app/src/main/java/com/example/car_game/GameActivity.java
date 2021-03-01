@@ -18,7 +18,7 @@ import android.view.WindowManager;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+public class GameActivity extends AppCompatActivity implements SensorEventListener {
 
     GameView gameView;
     SensorManager sensorManager;
@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     SensorManager.SENSOR_DELAY_UI);
         }
 
-        gameView = new GameView(this, display);
+        gameView = new GameView(this, display, this);
         setContentView(gameView);
     }
 
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         synchronized (this) {
             if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 float y = event.values[1];
-                if (y < 1 || y > -1) {
+                if (y < 1 && y > -1) {
                     y = 0;
                 }
                 gameView.setSensorValue(y);
