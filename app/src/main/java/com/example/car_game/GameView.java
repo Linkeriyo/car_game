@@ -2,13 +2,14 @@ package com.example.car_game;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.Pair;
-import android.util.SparseIntArray;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -19,8 +20,9 @@ import java.util.List;
 
 public class GameView extends SurfaceView {
 
-    private Point gameResolution = new Point(800, 600);
-    private Bitmap bmp;
+    private Point gameResolution = new Point(80, 60);
+    private Bitmap carBitmap;
+    private CarSprite carSprite;
     private Point display;
     private SurfaceHolder holder;
     private GameLoopThread gameLoopThread;
@@ -38,19 +40,21 @@ public class GameView extends SurfaceView {
     private Paint skyPaint = new Paint();
     private Rect pixelRect = new Rect();
     private Rect skyRect;
-    private int pixelWidth, pixelHeight;
+    private double pixelWidth, pixelHeight;
     private int frameNumber = 0;
+    private float sensorValue;
     // List with pairs (curvature, distance)
     private List<Pair<Double, Double>> trackSegList;
 
     public GameView(Context context, Point display) {
         super(context);
         textPaint.setColor(Color.WHITE);
-        textPaint.setTextSize(20);
-        skyPaint.setColor(Color.CYAN);
-        pixelWidth = display.x / gameResolution.x;
-        pixelHeight = display.y / gameResolution.y;
-        skyRect = new Rect(0, 0, display.x, display.y / 2);
+        textPaint.setTextSize(50);
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        skyPaint.setColor(Color.rgb(0, 200, 250));
+        pixelWidth = (double) display.x / gameResolution.x;
+        pixelHeight = (double) display.y / gameResolution.y;
+        skyRect = new Rect(0, 0, display.x, display.y / 2 + 1);
         setupTrack1();
         gameLoopThread = new GameLoopThread(this);
         this.display = display;
@@ -74,27 +78,31 @@ public class GameView extends SurfaceView {
                 }
             }
         });
-
+        carBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.car_sprite);
+        carSprite = new CarSprite(this, carBitmap);
     }
 
     // Circuito 1
     private void setupTrack1() {
         trackSegList = new ArrayList<>();
         trackSegList.add(new Pair<>(0.0, 10.0));
-        trackSegList.add(new Pair<>(0.0, 200.0));
-        trackSegList.add(new Pair<>(1.0, 200.0));
-        trackSegList.add(new Pair<>(0.0, 400.0));
-        trackSegList.add(new Pair<>(-1.0, 200.0));
-        trackSegList.add(new Pair<>(1.0, 200.0));
-        trackSegList.add(new Pair<>(0.0, 200.0));
-        trackSegList.add(new Pair<>(0.2, 500.0));
-        trackSegList.add(new Pair<>(0.0, 200.0));
+        trackSegList.add(new Pair<>(0.0, 20.0));
+        trackSegList.add(new Pair<>(1.0, 20.0));
+        trackSegList.add(new Pair<>(0.0, 40.0));
+        trackSegList.add(new Pair<>(-1.0, 20.0));
+        trackSegList.add(new Pair<>(1.0, 20.0));
+        trackSegList.add(new Pair<>(0.0, 20.0));
+        trackSegList.add(new Pair<>(0.2, 50.0));
+        trackSegList.add(new Pair<>(0.0, 20.0));
     }
 
     protected void onDraw(Canvas canvas) {
-        distance = distance + 2;
+        distance = distance + 1;
         frameNumber++;
-        canvas.drawText(frameNumber + "", 0, 0, textPaint);
+
+
+        // Draw Sky
+        canvas.drawRect(skyRect, skyPaint);
 
         // Get Point on track
         float fOffset = 0;
@@ -106,109 +114,120 @@ public class GameView extends SurfaceView {
             nTrackSection++;
         }
 
-        // Draw Sky
-        canvas.drawRect(skyRect, skyPaint);
-
+        try {
+            double targetCurvature = trackSegList.get(nTrackSection).first;
+            if (curvature < targetCurvature) {
+                curvature = curvature + 0.05;
+            } else if (curvature > targetCurvature) {
+                curvature = curvature - 0.05;
+            }
+            if (curvature <= 0.05 && curvature >= -0.05 && targetCurvature == 0) {
+                curvature = 0;
+            }
+        } catch (IndexOutOfBoundsException ex) {
+            distance = 0;
+            curvature = trackSegList.get(0).first;
+        }
 
         // Draw Track - Each row is split into grass, clip-board and track
         for (int i = gameResolution.y / 2; i < gameResolution.y; i++) {
-            double fPerspective = (double) i / (gameResolution.y / 2.0);
-            double fRoadWidth = 0.1 + fPerspective * 0.8; // Min 10% Max 90%
-            double fClipWidth = fRoadWidth * 0.15;
-            fRoadWidth *= 0.5;    // Halve it as track is symmetrical around center of track, but offset...
+            double perspective = i / (gameResolution.y / 2.0);
+            double roadWidth = perspective * 0.4;
+            double kurbWidth = roadWidth * 0.1;
+            roadWidth *= 0.5;    // Halve it as track is symmetrical around center of track, but offset...
 
             // ...depending on where the middle point is, which is defined by the current
             // track curvature.
-            double fMiddlePoint = 0.5 + curvature * Math.pow((1.0 - fPerspective), 3);
+            double middlePoint = 0.5 + curvature * Math.pow((2 - perspective), 3) / 2;
 
             // Work out segment boundaries
-            int leftGrass = (int) (fMiddlePoint - fRoadWidth - fClipWidth) * gameResolution.x;
-            int leftKurb = (int) (fMiddlePoint - fRoadWidth) * gameResolution.x;
-            int rightKurb = (int) (fMiddlePoint + fRoadWidth) * gameResolution.x;
-            int rightGrass = (int) (fMiddlePoint + fRoadWidth + fClipWidth) * gameResolution.x;
+            double leftGrass = (middlePoint - roadWidth - kurbWidth) * gameResolution.x;
+            double leftKurb = (middlePoint - roadWidth) * gameResolution.x;
+            double rightKurb = (middlePoint + roadWidth) * gameResolution.x;
+            double rightGrass = (middlePoint + roadWidth + kurbWidth) * gameResolution.x;
 
             // I use the sinus to have the color changinng constantly
             int grassColor;
-            if (Math.sin(20.0 * Math.pow(1.0 - fPerspective, 3) + distance * 0.1) > 0.0) {
-                grassColor = Color.GREEN;
+            if (Math.sin(5 * Math.pow(perspective / 4 - 6, 2) + distance) > 0.6) {
+                grassColor = Color.rgb(0, 150, 0);
             } else {
-                grassColor = Color.MAGENTA;
+                grassColor = Color.rgb(0, 200, 0);
             }
             int kurbColor;
-            if (Math.sin(80.0 * Math.pow(1.0 - fPerspective, 2) + distance) > 0.0) {
+            if (Math.sin(5 * Math.pow(perspective - 6, 2) + distance) > 0.0) {
                 kurbColor = Color.RED;
             } else {
                 kurbColor = Color.WHITE;
             }
             // Start finish straight changes the road colour to inform the player lap is reset
             int roadColor;
-            if ((nTrackSection - 1) == 0) {
-                roadColor = Color.WHITE;
+            if (Math.sin(5 * Math.pow(perspective / 4 - 6, 2) + distance) > 0.0) {
+                roadColor = Color.rgb(150, 150, 150);
             } else {
-                roadColor = Color.GRAY;
+                roadColor = Color.rgb(160, 160, 160);
             }
-
-            Point start;
-            Point end;
 
             // Draw the row segments
             pixelRect.top = getRowPos(i);
             pixelRect.bottom = getRowEnd(i);
 
             grassPaint.setColor(grassColor);
-            start = getPixelPos(0, i);
-            end = getPixelEndPos(leftGrass, i);
             pixelRect.left = 0;
-            pixelRect.right = leftGrass;
+            pixelRect.right = (int) (leftGrass * pixelWidth);
             canvas.drawRect(pixelRect, grassPaint);
 
             kurbPaint.setColor(kurbColor);
-            start = getPixelPos(leftGrass, i);
-            end = getPixelEndPos(leftKurb, i);
-            pixelRect.left = leftGrass;
-            pixelRect.right = leftKurb;
+            pixelRect.left = (int) (leftGrass * pixelWidth);
+            pixelRect.right = (int) (leftKurb * pixelWidth);
             canvas.drawRect(pixelRect, kurbPaint);
 
             roadPaint.setColor(roadColor);
-            start = getPixelPos(leftKurb, i);
-            end = getPixelEndPos(rightKurb, i);
-            pixelRect.left = leftKurb;
-            pixelRect.right = rightKurb;
+            pixelRect.left = (int) (leftKurb * pixelWidth);
+            pixelRect.right = (int) (rightKurb * pixelWidth);
             canvas.drawRect(pixelRect, roadPaint);
 
             kurbPaint.setColor(kurbColor);
-            start = getPixelPos(rightKurb, i);
-            end = getPixelEndPos(rightGrass, i);
-            pixelRect.left = rightKurb;
-            pixelRect.right = rightGrass;
+            pixelRect.left = (int) (rightKurb * pixelWidth);
+            pixelRect.right = (int) (rightGrass * pixelWidth);
             canvas.drawRect(pixelRect, kurbPaint);
 
             grassPaint.setColor(grassColor);
-            start = getPixelPos(rightGrass, i);
-            end = getPixelEndPos(gameResolution.x, i);
-            pixelRect.left = rightGrass;
-            pixelRect.right = gameResolution.x;
+            pixelRect.left = (int) (rightGrass * pixelWidth);
+            pixelRect.right = (int) (gameResolution.x * pixelWidth);
             canvas.drawRect(pixelRect, grassPaint);
         }
+
+        carSprite.setxSpeed(sensorValue*10 - curvature * 20);
+        carSprite.onDraw(canvas, (int) sensorValue / 2 + 3);
+        canvas.drawText(String.valueOf(frameNumber), 0, display.y, textPaint);
     }
 
     private int getRowPos(int y) {
-        return y * pixelHeight;
+        return (int) (y * pixelHeight) + 1;
     }
 
     private int getRowEnd(int y) {
-        return getRowPos(y) + pixelHeight;
+        return (int) (getRowPos(y) + pixelHeight) + 1;
     }
 
-    private Point getPixelPos(int x, int y) {
-        return new Point(x, y);
+    public void setSensorValue(float sensorValue) {
+        this.sensorValue = sensorValue;
     }
 
-    private Point getPixelEndPos(int x, int y) {
-        Point realPoint = new Point(getPixelPos(x, y));
-        realPoint.x = realPoint.x + pixelWidth;
-        realPoint.y = realPoint.y + pixelHeight;
-        return realPoint;
+    public int getDisplayWidth() {
+        return display.x;
+    }
+
+    public int getDisplayHeight() {
+        return display.y;
+    }
+
+    public void pause() {
+        gameLoopThread.setRunning(false);
+    }
+
+    public void resume() {
+        gameLoopThread.setRunning(true);
     }
 }
 
