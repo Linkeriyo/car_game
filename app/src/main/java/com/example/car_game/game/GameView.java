@@ -166,22 +166,17 @@ public class GameView extends SurfaceView {
             }
             gameStoppedFrames++;
         } else {
-            if (frameNumber == 0) {
-
-            }
-
             distance = distance + speed;
             frameNumber++;
 
-
             //If still on countdown
-            if (frameNumber < 120) {
+            if (frameNumber < 80) {
                 speed = 0;
 
                 //Out of countdown
             } else {
                 //On countdown end
-                if (frameNumber == 120) {
+                if (frameNumber == 80) {
                     activity.mediaPlayer.start();
                 }
 
@@ -214,7 +209,7 @@ public class GameView extends SurfaceView {
                         crashedFrames = 0;
                     }
 
-                    //Game running
+                //Game running
                 } else {
                     if (speed > 0) {
                         speed = speed - (initialGameOverSpeed / 10);
@@ -321,14 +316,28 @@ public class GameView extends SurfaceView {
                 canvas.drawRect(pixelRect, grassPaint);
             }
 
-            carSprite.setxSpeed(sensorValue * 10 - curvature * 60);
-            carSprite.onDraw(canvas, (int) sensorValue / 2 + 3);
-            if (remainingTime >= 0) {
-                canvas.drawText("Tiempo restante: " + remainingTime, 16, textPaint.getTextSize() + 10, textPaint);
-                canvas.drawText("Tiempo total: " + totalTime, 16, textPaint.getTextSize() * 2 + 10, textPaint);
-                canvas.drawText("Puntos: " + points, 16, textPaint.getTextSize() * 3 + 10, textPaint);
+            if (frameNumber < 80) {
+                carSprite.onDraw(canvas, 3);
+                if (frameNumber < 20) {
+                    canvas.drawText("3",display.x / 2 - 30, display.y / 2, textPaint);
+                } else if (frameNumber < 40) {
+                    canvas.drawText("2",display.x / 2 - 30, display.y / 2, textPaint);
+                } else {
+                    canvas.drawText("1",display.x / 2 - 30, display.y / 2, textPaint);
+                }
             } else {
-                canvas.drawText("Has perdido.", display.x / 2 - 300, display.y / 2, textPaint);
+                carSprite.setxSpeed(sensorValue * 10 - curvature * 60);
+                carSprite.onDraw(canvas, (int) sensorValue / 2 + 3);
+                if (frameNumber < 120) {
+                    canvas.drawText("Go!",display.x / 2 - 50, display.y / 2, textPaint);
+                }
+                if (remainingTime >= 0) {
+                    canvas.drawText("Tiempo restante: " + remainingTime, 16, textPaint.getTextSize() + 10, textPaint);
+                    canvas.drawText("Tiempo total: " + totalTime, 16, textPaint.getTextSize() * 2 + 10, textPaint);
+                    canvas.drawText("Puntos: " + points, 16, textPaint.getTextSize() * 3 + 10, textPaint);
+                } else {
+                    canvas.drawText("Has perdido.", display.x / 2 - 300, display.y / 2, textPaint);
+                }
             }
         }
     }
