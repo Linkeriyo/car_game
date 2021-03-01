@@ -5,7 +5,7 @@ import android.graphics.Canvas;
 
 public class GameLoopThread extends Thread {
     static final long FPS = 20;
-    private GameView view;
+    private final GameView view;
     private boolean running = false;
 
     public GameLoopThread(GameView view) {

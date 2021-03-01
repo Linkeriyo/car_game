@@ -75,19 +75,19 @@ public class CarSprite {
     }
 
     private int getCrashedBitmapNumber(int crashedFrame) {
-        if (crashedFrame < 3) {
+        if (crashedFrame < 4) {
             return 0;
-        } else if (crashedFrame < 12) {
+        } else if (crashedFrame < 8) {
             return 1;
-        } else if (crashedFrame < 16) {
+        } else if (crashedFrame < 12) {
             return 2;
-        } else if (crashedFrame < 22) {
+        } else if (crashedFrame < 16) {
             return 3;
-        } else if (crashedFrame < 25) {
+        } else if (crashedFrame < 20) {
             return 4;
-        } else if (crashedFrame < 30) {
+        } else if (crashedFrame < 25) {
             return 5;
-        } else if (crashedFrame < 40) {
+        } else if (crashedFrame < 35) {
             return 6;
         } else {
             return 7;

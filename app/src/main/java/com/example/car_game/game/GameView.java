@@ -9,8 +9,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.media.AudioManager;
-import android.media.SoundPool;
 import android.util.Pair;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -32,6 +30,7 @@ public class GameView extends SurfaceView {
     private final Point display;
     private final GameLoopThread gameLoopThread;
     private final GameActivity activity;
+    private final IngameSounds ingameSounds;
     private double distance = 0.0;
     private double curvature = 0.0;
     private double trackDistance = 0.0;
@@ -89,6 +88,7 @@ public class GameView extends SurfaceView {
             gameLoopThread.setRunning(false);
             activity.finish();
         });
+        ingameSounds = new IngameSounds(getContext());
         SurfaceHolder holder = getHolder();
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -98,12 +98,12 @@ public class GameView extends SurfaceView {
             }
 
             @Override
-            public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
-            }
+            public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {}
 
             @Override
             public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
                 gameLoopThread.setRunning(false);
+                ingameSounds.stopAll();
             }
         });
     }
@@ -122,7 +122,7 @@ public class GameView extends SurfaceView {
                 trackSecList.add(new Pair<>(0.4, 100.0));
                 trackSecList.add(new Pair<>(0.0, 50.0));
                 minLaptime = 30;
-                remainingTime = minLaptime + 20;
+                remainingTime = minLaptime + 15;
                 break;
             case 2:
                 trackSecList.add(new Pair<>(0.0, 100.0));
@@ -136,8 +136,8 @@ public class GameView extends SurfaceView {
                 trackSecList.add(new Pair<>(0.5, 60.0));
                 trackSecList.add(new Pair<>(-1.0, 80.0));
                 trackSecList.add(new Pair<>(0.0, 30.0));
-                minLaptime = 30;
-                remainingTime = minLaptime + 10;
+                minLaptime = 35;
+                remainingTime = minLaptime + 8;
                 break;
             case 3:
                 trackSecList.add(new Pair<>(0.0, 80.0));
@@ -149,14 +149,13 @@ public class GameView extends SurfaceView {
                 trackSecList.add(new Pair<>(-0.5, 30.0));
                 trackSecList.add(new Pair<>(2.0, 45.0));
                 trackSecList.add(new Pair<>(-2.0, 15.0));
-                trackSecList.add(new Pair<>(0.0, 20.0));
+                trackSecList.add(new Pair<>(0.0, 40.0));
                 minLaptime = 25;
                 remainingTime = minLaptime + 2;
                 break;
         }
         trackDistance = 0;
         trackSecList.forEach(pair -> trackDistance = trackDistance + pair.second);
-
     }
 
     protected void onDraw(Canvas canvas) {
@@ -168,61 +167,6 @@ public class GameView extends SurfaceView {
         } else {
             distance = distance + speed;
             frameNumber++;
-
-            //If still on countdown
-            if (frameNumber < 80) {
-                speed = 0;
-
-                //Out of countdown
-            } else {
-                //On countdown end
-                if (frameNumber == 80) {
-                    activity.mediaPlayer.start();
-                }
-
-                //Time over
-                if (remainingTime == 0) {
-                    gameOver = true;
-                    initialGameOverSpeed = speed;
-                }
-
-                //Each second
-                if (frameNumber % 20 == 0) {
-                    remainingTime--;
-                    if (!gameOver) {
-                        totalTime++;
-                    }
-                }
-
-                //Game over
-                if (!gameOver) {
-                    if (crashed) {
-                        if (crashedFrames == 0) {
-                            crashes++;
-                        }
-                        if (speed > 0) {
-                            speed = speed - (0.1);
-                        }
-                        crashedFrames++;
-                    } else {
-                        speed = 1;
-                        crashedFrames = 0;
-                    }
-
-                //Game running
-                } else {
-                    if (speed > 0) {
-                        speed = speed - (initialGameOverSpeed / 10);
-                    } else if (speed < 0.5) {
-                        speed = 0;
-                    }
-                    if (distance == 0) {
-                        remainingTime = remainingTime + minLaptime;
-                    }
-                }
-            }
-
-            points = (int) (totalTime * 31.4 - crashes * 100);
 
             // Draw Sky
             canvas.drawRect(skyRect, skyPaint);
@@ -250,7 +194,74 @@ public class GameView extends SurfaceView {
                 curvature = trackSecList.get(0).first;
             }
 
+            //If still on countdown
+            if (frameNumber < 80) {
+                speed = 0;
+                if (frameNumber == 1) {
+                    ingameSounds.playCountdown();
+                    ingameSounds.playCarStart();
+                }
+                //Out of countdown
+            } else {
+                if (distance == 0 && frameNumber > 120) {
+                    remainingTime = remainingTime + minLaptime;
+                }
 
+                //On countdown end
+                if (frameNumber == 80) {
+                    activity.mediaPlayer.start();
+                    ingameSounds.startEngineLoop();
+                }
+
+                //Time over
+                if (remainingTime == 0) {
+                    gameOver = true;
+                    initialGameOverSpeed = speed;
+                    ingameSounds.stopEngineLoop();
+                }
+
+                //Each second
+                if (frameNumber % 20 == 0) {
+                    remainingTime--;
+                    if (!gameOver) {
+                        totalTime++;
+                    }
+                }
+
+                //Game running
+                if (!gameOver) {
+                    if (crashed) {
+                        if (crashedFrames == 0) {
+                            crashes++;
+                            ingameSounds.playCrash();
+                            ingameSounds.stopEngineLoop();
+                        }
+                        if (speed > 0) {
+                            speed = speed - (0.1);
+                        }
+                        crashedFrames++;
+                        if (crashedFrames == 60) {
+                            ingameSounds.startEngineLoop();
+                        }
+                    } else {
+                        speed = 1;
+                        crashedFrames = 0;
+                    }
+
+                //Game over
+                } else {
+                    if (speed > 0) {
+                        speed = speed - (initialGameOverSpeed / 10);
+                    } else if (speed < 0.5) {
+                        speed = 0;
+                    }
+                }
+            }
+
+            points = (int) (totalTime * 31.4 - crashes * 100);
+            if (points < 0) {
+                points = 0;
+            }
 
             // Draw track
             for (int i = gameResolution.y / 2; i < gameResolution.y; i++) {
@@ -326,10 +337,19 @@ public class GameView extends SurfaceView {
                     canvas.drawText("1",display.x / 2 - 30, display.y / 2, textPaint);
                 }
             } else {
+                int orientation = (int) sensorValue / 2 + 3;
                 carSprite.setxSpeed(sensorValue * 10 - curvature * 60);
-                carSprite.onDraw(canvas, (int) sensorValue / 2 + 3);
+                carSprite.onDraw(canvas, orientation);
+                if (orientation <= 1 || orientation >= 5) {
+                    ingameSounds.startSqualLoop();
+                } else {
+                    ingameSounds.stopSqualLoop();
+                }
                 if (frameNumber < 120) {
                     canvas.drawText("Go!",display.x / 2 - 50, display.y / 2, textPaint);
+                }
+                if (distance > 0 && distance < 20 && frameNumber > 200) {
+                    canvas.drawText("+Tiempo", display.x / 2 - 300, display.y/2, textPaint);
                 }
                 if (remainingTime >= 0) {
                     canvas.drawText("Tiempo restante: " + remainingTime, 16, textPaint.getTextSize() + 10, textPaint);
@@ -366,4 +386,3 @@ public class GameView extends SurfaceView {
         this.crashed = crashed;
     }
 }
-

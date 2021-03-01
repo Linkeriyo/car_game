@@ -45,7 +45,7 @@ public class GameActivity extends AppCompatActivity implements SensorEventListen
 
         mediaPlayer = MediaPlayer.create(this, R.raw.ingamemusic);
         mediaPlayer.setLooping(true);
-        mediaPlayer.setVolume(0.5f, 0.5f);
+        mediaPlayer.setVolume(0.7f, 0.7f);
         mediaPlayerPaused = false;
 
         gameView = new GameView(this, display, this, getIntent().getIntExtra("level", 1));
