@@ -1,4 +1,4 @@
-package com.example.car_game;
+package com.example.car_game.game;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,13 +9,15 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.util.Pair;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.res.ResourcesCompat;
+
+import com.example.car_game.R;
+import com.example.car_game.ResultActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +58,7 @@ public class GameView extends SurfaceView {
     private final Thread endThread;
     private int gameStoppedFrames;
 
-    public GameView(Context context, Point display, GameActivity activity) {
+    public GameView(Context context, Point display, GameActivity activity, int level) {
         super(context);
         this.activity = activity;
         textPaint.setColor(Color.BLACK);
@@ -68,7 +70,7 @@ public class GameView extends SurfaceView {
         pixelWidth = (double) display.x / gameResolution.x;
         pixelHeight = (double) display.y / gameResolution.y;
         skyRect = new Rect(0, 0, display.x, display.y / 2 + 1);
-        setupTrack(2);
+        setupTrack(level);
         gameLoopThread = new GameLoopThread(this);
         this.display = display;
         SurfaceHolder holder = getHolder();
@@ -85,10 +87,7 @@ public class GameView extends SurfaceView {
 
             @Override
             public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-                try {
-                    gameLoopThread.join();
-                } catch (InterruptedException ignored) {
-                }
+                gameLoopThread.setRunning(false);
             }
         });
         Bitmap carBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.car_sprite);
@@ -98,7 +97,9 @@ public class GameView extends SurfaceView {
             activity.startActivity(new Intent(activity, ResultActivity.class)
                     .putExtra("totalTime", totalTime)
                     .putExtra("crashes", crashes)
-                    .putExtra("points", points));
+                    .putExtra("points", points)
+                    .putExtra("level", level)
+            );
             gameLoopThread.setRunning(false);
             activity.finish();
         });

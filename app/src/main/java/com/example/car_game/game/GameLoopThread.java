@@ -1,4 +1,4 @@
-package com.example.car_game;
+package com.example.car_game.game;
 
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;

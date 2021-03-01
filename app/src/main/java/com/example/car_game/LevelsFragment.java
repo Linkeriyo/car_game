@@ -1,64 +1,113 @@
 package com.example.car_game;
 
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavDirections;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link LevelsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.example.car_game.game.GameActivity;
+
 public class LevelsFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public LevelsFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment levelsFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static LevelsFragment newInstance(String param1, String param2) {
-        LevelsFragment fragment = new LevelsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    TextView level1TextView, level2TextView, level3TextView, backTextView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_levels, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        setupViews(view);
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    public void setupViews(View view) {
+        level1TextView = view.findViewById(R.id.level1_textview);
+        level2TextView = view.findViewById(R.id.level2_textview);
+        level3TextView = view.findViewById(R.id.level3_textview);
+        backTextView = view.findViewById(R.id.levels_back_textview);
+        
+        level1TextView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                level1TextView.setTextColor(Color.MAGENTA);
+                level1TextView.setBackgroundColor(Color.CYAN);
+                startActivity(new Intent(getContext(), GameActivity.class).putExtra("level", 1));
+                stopMusic();
+                NavDirections direction = LevelsFragmentDirections.actionLevelsFragmentToMainMenuFragment();
+                Navigation.findNavController(v).navigate(direction);
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                level1TextView.setTextColor(Color.BLACK);
+                level1TextView.setBackgroundColor(Color.WHITE);
+            }
+            return v.performClick();
+        });
+
+        level2TextView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                level2TextView.setTextColor(Color.MAGENTA);
+                level2TextView.setBackgroundColor(Color.CYAN);
+                startActivity(new Intent(getContext(), GameActivity.class).putExtra("level", 2));
+                stopMusic();
+                NavDirections direction = LevelsFragmentDirections.actionLevelsFragmentToMainMenuFragment();
+                Navigation.findNavController(v).navigate(direction);
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                level2TextView.setTextColor(Color.BLACK);
+                level2TextView.setBackgroundColor(Color.WHITE);
+            }
+            return v.performClick();
+        });
+
+        level3TextView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                level3TextView.setTextColor(Color.MAGENTA);
+                level3TextView.setBackgroundColor(Color.CYAN);
+                startActivity(new Intent(getContext(), GameActivity.class).putExtra("level", 3));
+                stopMusic();
+                NavDirections direction = LevelsFragmentDirections.actionLevelsFragmentToMainMenuFragment();
+                Navigation.findNavController(v).navigate(direction);
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                level3TextView.setTextColor(Color.BLACK);
+                level3TextView.setBackgroundColor(Color.WHITE);
+            }
+            return v.performClick();
+        });
+
+        backTextView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                backTextView.setTextColor(Color.MAGENTA);
+                backTextView.setBackgroundColor(Color.CYAN);
+                NavDirections direction = LevelsFragmentDirections.actionLevelsFragmentToMainMenuFragment();
+                Navigation.findNavController(v).navigate(direction);
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                backTextView.setTextColor(Color.BLACK);
+                backTextView.setBackgroundColor(Color.WHITE);
+            }
+            return v.performClick();
+        });
+    }
+
+    private void stopMusic() {
+        MenuActivity activity = (MenuActivity) getActivity();
+        activity.mediaPlayer.seekTo(0);
     }
 }

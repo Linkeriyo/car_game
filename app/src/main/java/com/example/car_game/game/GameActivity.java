@@ -1,9 +1,8 @@
-package com.example.car_game;
+package com.example.car_game.game;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.graphics.Paint;
 import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -13,8 +12,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowInsetsController;
-import android.view.WindowManager;
 
 import java.util.List;
 
@@ -41,7 +38,7 @@ public class GameActivity extends AppCompatActivity implements SensorEventListen
                     SensorManager.SENSOR_DELAY_UI);
         }
 
-        gameView = new GameView(this, display, this);
+        gameView = new GameView(this, display, this, getIntent().getIntExtra("level", 1));
         setContentView(gameView);
     }
 

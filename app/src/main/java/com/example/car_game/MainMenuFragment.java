@@ -1,64 +1,85 @@
 package com.example.car_game;
 
+import android.annotation.SuppressLint;
+import android.graphics.Color;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavDirections;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link MainMenuFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class MainMenuFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public MainMenuFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment MainMenuFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static MainMenuFragment newInstance(String param1, String param2) {
-        MainMenuFragment fragment = new MainMenuFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    TextView playTextView, tutorialTextView, exitTextView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_main_menu, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        setupViews(view);
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    public void setupViews(View view) {
+        playTextView = view.findViewById(R.id.play_textview);
+        tutorialTextView = view.findViewById(R.id.tutorial_textview);
+        exitTextView = view.findViewById(R.id.exit_textview);
+
+        playTextView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                playTextView.setTextColor(Color.MAGENTA);
+                playTextView.setBackgroundColor(Color.CYAN);
+                NavDirections direction = MainMenuFragmentDirections.actionMainMenuFragmentToLevelsFragment();
+                Navigation.findNavController(v).navigate(direction);
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                playTextView.setTextColor(Color.BLACK);
+                playTextView.setBackgroundColor(Color.WHITE);
+            }
+            return v.performClick();
+        });
+
+        tutorialTextView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                tutorialTextView.setTextColor(Color.MAGENTA);
+                tutorialTextView.setBackgroundColor(Color.CYAN);
+                NavDirections direction = MainMenuFragmentDirections.actionMainMenuFragmentToTutorialFragment();
+                Navigation.findNavController(v).navigate(direction);
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                tutorialTextView.setTextColor(Color.BLACK);
+                tutorialTextView.setBackgroundColor(Color.WHITE);
+            }
+            return v.performClick();
+        });
+
+        exitTextView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                exitTextView.setTextColor(Color.MAGENTA);
+                exitTextView.setBackgroundColor(Color.CYAN);
+                getActivity().finish();
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                exitTextView.setTextColor(Color.BLACK);
+                exitTextView.setBackgroundColor(Color.WHITE);
+            }
+            return v.performClick();
+        });
     }
 }

@@ -20,10 +20,18 @@
         android:id="@+id/tutorialFragment"
         android:name="com.example.car_game.TutorialFragment"
         android:label="fragment_tutorial"
-        tools:layout="@layout/fragment_tutorial" />
+        tools:layout="@layout/fragment_tutorial" >
+        <action
+            android:id="@+id/action_tutorialFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
+    </fragment>
     <fragment
         android:id="@+id/levelsFragment"
         android:name="com.example.car_game.LevelsFragment"
         android:label="fragment_levels"
-        tools:layout="@layout/fragment_levels" />
+        tools:layout="@layout/fragment_levels" >
+        <action
+            android:id="@+id/action_levelsFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
+    </fragment>
 </navigation>
