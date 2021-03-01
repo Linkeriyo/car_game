@@ -20,29 +20,28 @@ import java.util.List;
 
 public class GameView extends SurfaceView {
 
-    private Point gameResolution = new Point(80, 60);
-    private Bitmap carBitmap;
-    private CarSprite carSprite;
-    private Point display;
-    private SurfaceHolder holder;
-    private GameLoopThread gameLoopThread;
+    private final Point gameResolution = new Point(80, 60);
+    private final CarSprite carSprite;
+    private final Point display;
+    private final GameLoopThread gameLoopThread;
     private double distance = 0.0;          // Distance car has travelled around track
     private double curvature = 0.0;         // Current track curvature, lerped between track sections
-    private double trackCurvature = 0.0;    // Accumulation of track curvature
     private double trackDistance = 0.0;     // Total distance of track
-    private double carPos = 0.0;            // Current car position
-    private double playerCurvature = 0.0;   // Accumulation of player curvature
-    private double speed = 0.0;             // Current player speed
-    private Paint grassPaint = new Paint();
-    private Paint kurbPaint = new Paint();
-    private Paint roadPaint = new Paint();
-    private Paint textPaint = new Paint();
-    private Paint skyPaint = new Paint();
-    private Rect pixelRect = new Rect();
-    private Rect skyRect;
-    private double pixelWidth, pixelHeight;
+    private double speed = 1;             // Current player speed
+    private final Paint grassPaint = new Paint();
+    private final Paint kurbPaint = new Paint();
+    private final Paint roadPaint = new Paint();
+    private final Paint textPaint = new Paint();
+    private final Paint skyPaint = new Paint();
+    private final Rect pixelRect = new Rect();
+    private final Rect skyRect;
+    private final double pixelWidth;
+    private final double pixelHeight;
     private int frameNumber = 0;
     private float sensorValue;
+    private int crashedFrames = 0;
+    private boolean crashed = false;
+    private double initalCrashSpeed;
     // List with pairs (curvature, distance)
     private List<Pair<Double, Double>> trackSegList;
 
@@ -58,7 +57,7 @@ public class GameView extends SurfaceView {
         setupTrack1();
         gameLoopThread = new GameLoopThread(this);
         this.display = display;
-        holder = getHolder();
+        SurfaceHolder holder = getHolder();
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(@NonNull SurfaceHolder holder) {
@@ -78,8 +77,9 @@ public class GameView extends SurfaceView {
                 }
             }
         });
-        carBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.car_sprite);
-        carSprite = new CarSprite(this, carBitmap);
+        Bitmap carBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.car_sprite);
+        Bitmap crashedCarBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.car_crash_sprite);
+        carSprite = new CarSprite(this, carBitmap, crashedCarBitmap);
     }
 
     // Circuito 1
@@ -94,15 +94,30 @@ public class GameView extends SurfaceView {
         trackSegList.add(new Pair<>(0.0, 20.0));
         trackSegList.add(new Pair<>(0.2, 50.0));
         trackSegList.add(new Pair<>(0.0, 20.0));
+
+        trackDistance = 0;
+        trackSegList.forEach(pair -> trackDistance = trackDistance + pair.second);
     }
 
     protected void onDraw(Canvas canvas) {
-        distance = distance + 1;
+        distance = distance + speed;
         frameNumber++;
 
+        if (crashed) {
+            if (crashedFrames == 0) {
+                initalCrashSpeed = speed;
+            }
+            if (speed > 0) {
+                speed = speed - (initalCrashSpeed / 10);
+            }
+            crashedFrames++;
+        } else {
+            speed = 1;
+        }
 
         // Draw Sky
         canvas.drawRect(skyRect, skyPaint);
+
 
         // Get Point on track
         float fOffset = 0;
@@ -129,18 +144,16 @@ public class GameView extends SurfaceView {
             curvature = trackSegList.get(0).first;
         }
 
-        // Draw Track - Each row is split into grass, clip-board and track
+        // Draw track
         for (int i = gameResolution.y / 2; i < gameResolution.y; i++) {
             double perspective = i / (gameResolution.y / 2.0);
             double roadWidth = perspective * 0.4;
             double kurbWidth = roadWidth * 0.1;
-            roadWidth *= 0.5;    // Halve it as track is symmetrical around center of track, but offset...
+            roadWidth *= 0.5;
 
-            // ...depending on where the middle point is, which is defined by the current
-            // track curvature.
             double middlePoint = 0.5 + curvature * Math.pow((2 - perspective), 3) / 2;
 
-            // Work out segment boundaries
+            // Row bounds
             double leftGrass = (middlePoint - roadWidth - kurbWidth) * gameResolution.x;
             double leftKurb = (middlePoint - roadWidth) * gameResolution.x;
             double rightKurb = (middlePoint + roadWidth) * gameResolution.x;
@@ -186,20 +199,19 @@ public class GameView extends SurfaceView {
             pixelRect.right = (int) (rightKurb * pixelWidth);
             canvas.drawRect(pixelRect, roadPaint);
 
-            kurbPaint.setColor(kurbColor);
             pixelRect.left = (int) (rightKurb * pixelWidth);
             pixelRect.right = (int) (rightGrass * pixelWidth);
             canvas.drawRect(pixelRect, kurbPaint);
 
-            grassPaint.setColor(grassColor);
             pixelRect.left = (int) (rightGrass * pixelWidth);
             pixelRect.right = (int) (gameResolution.x * pixelWidth);
             canvas.drawRect(pixelRect, grassPaint);
         }
 
-        carSprite.setxSpeed(sensorValue*10 - curvature * 20);
+        carSprite.setxSpeed(sensorValue * 10 - curvature * 20);
         carSprite.onDraw(canvas, (int) sensorValue / 2 + 3);
         canvas.drawText(String.valueOf(frameNumber), 0, display.y, textPaint);
+        crashedFrames = 0;
     }
 
     private int getRowPos(int y) {
@@ -228,6 +240,10 @@ public class GameView extends SurfaceView {
 
     public void resume() {
         gameLoopThread.setRunning(true);
+    }
+
+    public void setCrashed(boolean crashed) {
+        this.crashed = crashed;
     }
 }
 
