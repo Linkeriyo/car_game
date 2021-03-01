@@ -20,7 +20,7 @@ import java.util.List;
 
 public class GameView extends SurfaceView {
 
-    private final Point gameResolution = new Point(80, 60);
+    private final Point gameResolution = new Point(120, 80);
     private final CarSprite carSprite;
     private final Point display;
     private final GameLoopThread gameLoopThread;
@@ -132,9 +132,9 @@ public class GameView extends SurfaceView {
         try {
             double targetCurvature = trackSegList.get(nTrackSection).first;
             if (curvature < targetCurvature) {
-                curvature = curvature + 0.05;
+                curvature = curvature + 0.05 * speed;
             } else if (curvature > targetCurvature) {
-                curvature = curvature - 0.05;
+                curvature = curvature - 0.05 * speed;
             }
             if (curvature <= 0.05 && curvature >= -0.05 && targetCurvature == 0) {
                 curvature = 0;
@@ -208,7 +208,7 @@ public class GameView extends SurfaceView {
             canvas.drawRect(pixelRect, grassPaint);
         }
 
-        carSprite.setxSpeed(sensorValue * 10 - curvature * 20);
+        carSprite.setxSpeed(sensorValue * 10 - curvature * 40);
         carSprite.onDraw(canvas, (int) sensorValue / 2 + 3);
         canvas.drawText(String.valueOf(frameNumber), 0, display.y, textPaint);
         crashedFrames = 0;

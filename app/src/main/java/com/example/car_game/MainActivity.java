@@ -66,6 +66,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         synchronized (this) {
             if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 float y = event.values[1];
+                if (y < 1 || y > -1) {
+                    y = 0;
+                }
                 gameView.setSensorValue(y);
             }
         }
