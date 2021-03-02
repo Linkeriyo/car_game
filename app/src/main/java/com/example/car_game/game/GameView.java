@@ -240,6 +240,9 @@ public class GameView extends SurfaceView {
                         if (speed > 0) {
                             speed = speed - (0.1);
                         }
+                        if (speed < 0.1) {
+                            speed = 0;
+                        }
                         crashedFrames++;
                         if (crashedFrames == 60) {
                             ingameSounds.startEngineLoop();
