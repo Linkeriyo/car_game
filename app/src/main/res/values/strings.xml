@@ -1,7 +1,5 @@
 <resources>
-    <string name="app_name">car_game</string>
+    <string name="app_name">Super Racing</string>
     <string name="tutorial_text">Para conseguir la mayor puntuación necesitarás seguir la carretera sin chocarte. Dependiendo del circuito que elijas, la dificultad será mayor.<br /><br />
         Para controlar el coche, tendrás que inclinar el dispositivo hacia la izquierda o la derecha dependiendo de la curva, si no lo haces bien tendrás una accidente.<br /><br /> La puntuación dependerá del tiempo que hayas sobrevivido, pero los choques restarán puntos.</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

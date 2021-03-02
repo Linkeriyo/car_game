@@ -104,6 +104,7 @@ public class GameView extends SurfaceView {
             public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
                 gameLoopThread.setRunning(false);
                 ingameSounds.stopAll();
+                activity.finish();
             }
         });
     }
